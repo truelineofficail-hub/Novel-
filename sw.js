@@ -2,11 +2,11 @@ const CACHE_NAME = "Novel";
 const ASSETS = [
   "./index.html",
   "./manifest.json",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./icons/icon-180.png",
-  "./icons/icon-32.png",
-  "./icons/icon-16.png"
+  ".icon-192.png",
+  ".icon-512.png",
+  ".icon-180.png",
+  ".icon-32.png",
+  ".icon-16.png"
 ];
 
 self.addEventListener("install", (event) => {
