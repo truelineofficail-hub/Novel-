@@ -1,6 +1,6 @@
-const CACHE_NAME = "1000-days-v1";
+const CACHE_NAME = "Novel";
 const ASSETS = [
-  "./1000-days.html",
+  "./index.html",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
