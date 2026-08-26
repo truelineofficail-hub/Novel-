@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>1000 Days</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=Poppins:ital,wght@0,200;0,300;0,400;0,800;1,300;1,400&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg: #000000;
+    --bg-soft: #0a0a0a;
+    --ink: #ffffff;
+    --ink-dim: #9a9a9a;
+    --ink-faint: #555555;
+    --accent: #ffffff;
+    --accent-soft: rgba(255,255,255,.28);
+    --line: rgba(255,255,255,.08);
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  html{ scroll-behavior:smooth; touch-action:pan-y; }
+
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family:'Poppins', sans-serif;
+    font-weight:300;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+    touch-action:pan-y;
+  }
+
+  ::selection{ background: var(--accent-soft); color:#fff; }
+
+  html, body{ scrollbar-width:none; -ms-overflow-style:none; }
+  body::-webkit-scrollbar{ display:none; width:0; }
+
+  a{ color:inherit; }
+
+  body.locked{ overflow:hidden; height:100%; }
+
+  .preloader{
+    position:fixed; inset:0; z-index:9999; background:#000;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    transition: opacity .7s ease, visibility .7s ease;
+  }
+  .preloader.hidden{ opacity:0; visibility:hidden; pointer-events:none; }
+  .preloader-count{
+    font-style:italic; font-weight:400;
+    font-size:clamp(3.2rem, 15vw, 7.5rem); color:#fff; line-height:1;
+    font-variant-numeric: tabular-nums;
+  }
+  .preloader-unit{
+    margin-top:6px; font-size:.62rem; letter-spacing:5px; text-transform:uppercase; color: var(--ink-faint);
+  }
+  .preloader-bar{
+    margin-top:34px; width:120px; height:1px; background: var(--line); position:relative; overflow:hidden;
+  }
+  .preloader-bar span{
+    position:absolute; left:0; top:0; height:100%; width:0%; background:#fff;
+  }
+
+  .noise{
+    position:fixed; inset:0; pointer-events:none;
+    opacity:.035;
+    background-image:url("https://www.transparenttextures.com/patterns/asfalt-dark.png");
+    z-index:998;
+  }
+
+  .stars{
+    position:fixed; inset:0; pointer-events:none; z-index:1;
+    background-image:
+      radial-gradient(1px 1px at 12% 22%, rgba(255,255,255,.35), transparent 60%),
+      radial-gradient(1px 1px at 78% 14%, rgba(255,255,255,.25), transparent 60%),
+      radial-gradient(1.5px 1.5px at 42% 68%, rgba(255,255,255,.3), transparent 60%),
+      radial-gradient(1px 1px at 88% 82%, rgba(255,255,255,.25), transparent 60%),
+      radial-gradient(1px 1px at 24% 90%, rgba(255,255,255,.2), transparent 60%),
+      radial-gradient(1.5px 1.5px at 60% 38%, rgba(255,255,255,.28), transparent 60%);
+    background-repeat: repeat;
+    background-size: 100% 2400px;
+    opacity:.5;
+  }
+
+  .thread{
+    position:fixed;
+    left:26px; top:0; bottom:0;
+    width:1px;
+    background: var(--line);
+    z-index:900;
+  }
+  .thread-fill{
+    position:absolute; left:0; top:0; width:100%; height:0%;
+    background: linear-gradient(180deg, var(--accent), rgba(255,255,255,.12));
+    transition: height .08s linear;
+  }
+  .day-badge{
+    position:fixed; left:16px; bottom:26px; z-index:901;
+    font-size:.62rem; letter-spacing:2.5px; color:var(--ink-dim);
+    text-transform:uppercase; writing-mode:vertical-rl;
+    display:flex; align-items:center; gap:10px;
+  }
+  .day-badge b{ color:var(--accent); font-weight:400; letter-spacing:3px; }
+
+  @media (max-width: 760px){
+    .thread, .day-badge{ display:none; }
+    .top-progress{
+      position:fixed; top:0; left:0; height:2px; width:0%;
+      background: var(--accent); z-index:901; transition:width .08s linear;
+    }
+  }
+  .top-progress{ display:none; }
+  @media (max-width:760px){ .top-progress{ display:block; } }
+
+  .hero{
+    height:100dvh;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    position:relative; padding:30px; text-align:center;
+  }
+  .hero::before{
+    content:""; position:absolute; width:340px; height:340px; border-radius:50%;
+    background: radial-gradient(circle, rgba(255,255,255,.06) 0%, transparent 70%);
+    filter: blur(80px); z-index:1;
+  }
+  .hero-content{ z-index:2; max-width:520px; animation: fadeIn 2.2s cubic-bezier(.16,1,.3,1) forwards; }
+  .hero-subtitle{
+    font-size:.7rem; letter-spacing:8px; color: var(--ink-dim);
+    text-transform:uppercase; margin-bottom:26px; display:block;
+  }
+  .hero h1{
+    font-weight:800;
+    font-size:clamp(3rem, 8vw, 5rem); letter-spacing:1px; color:#fff; line-height:1.1;
+    margin-bottom:22px;
+  }
+  .hero-divider{ width:36px; height:1px; background: var(--accent-soft); margin:26px auto; }
+  .hero-quote{
+    font-family:'Cormorant Garamond', serif; font-size:1.1rem; color:var(--ink-dim);
+    letter-spacing:.5px; line-height:2;
+  }
+  .hero-stats{
+    display:flex; align-items:center; justify-content:center; gap:16px;
+    margin-top:40px;
+  }
+  .hero-stat{ text-align:center; }
+  .hero-stat span{
+    display:block; font-size:.62rem; letter-spacing:2.5px; text-transform:uppercase; color:#fff;
+  }
+  .hero-stat small{
+    display:block; margin-top:6px; font-size:.6rem; letter-spacing:1px; color: var(--ink-faint);
+  }
+  .hero-stat-line{ width:34px; height:1px; background: var(--line); }
+
+  .scroll-indicator{
+    position:absolute; bottom:40px; left:50%; transform:translateX(-50%);
+    font-size:.65rem; letter-spacing:5px; color:var(--ink-faint);
+    text-transform:uppercase; animation: float 2.6s ease-in-out infinite;
+  }
+
+  .story{
+    max-width:640px; margin:0 auto; padding:0 26px 40px;
+    position:relative; z-index:2;
+  }
+
+  .chapter{ padding-top:110px; }
+  .chapter:first-of-type{ padding-top:60px; }
+
+  .chapter-marker{
+    display:flex; align-items:baseline; gap:18px; margin-bottom:54px;
+  }
+  .chapter-numeral{
+    font-family:'Cormorant Garamond', serif; font-style:italic; font-size:2.6rem;
+    color: var(--accent); line-height:1;
+  }
+  .chapter-name{
+    font-size:.68rem; letter-spacing:4px; text-transform:uppercase; color: var(--ink-dim);
+  }
+  .chapter-name::before{
+    content:""; display:block; width:26px; height:1px; background:var(--line); margin-bottom:10px;
+  }
+
+  .chapter-eyebrow{
+    font-size:.68rem; letter-spacing:4px; text-transform:uppercase; color:var(--accent);
+    margin-bottom:14px;
+  }
+  .chapter-title{
+    font-family:'Cormorant Garamond', serif; font-weight:400; font-style:italic;
+    font-size:clamp(1.7rem, 4vw, 2.3rem); color:#fff; margin-bottom:40px; line-height:1.3;
+  }
+
+  .scene-title{
+    font-family:'Cormorant Garamond', serif; font-style:italic; font-weight:500;
+    font-size:1.15rem; color: var(--accent); letter-spacing:.5px;
+    margin: 56px 0 26px; padding-bottom:14px; border-bottom:1px solid var(--line);
+  }
+  .chapter > .scene-title:first-of-type{ margin-top:0; }
+
+  p.reveal{
+    font-family:'Cormorant Garamond', serif; font-size:clamp(1.05rem, 2vw, 1.28rem);
+    line-height:2; color: var(--ink-dim); margin-bottom:26px;
+    opacity:.14; transform: translateY(16px); filter: blur(1.5px);
+    transition: opacity .9s ease, transform .9s ease, filter .9s ease, color .9s ease;
+  }
+  p.reveal.active{ opacity:1; transform:translateY(0); filter:blur(0); color: var(--ink); }
+
+  blockquote.line{
+    position:relative; margin: 34px 0; padding: 6px 0 6px 30px;
+    border-left:1px solid var(--accent-soft);
+    font-family:'Cormorant Garamond', serif; font-style:italic; font-size:1.25rem;
+    color:#fff; line-height:1.8; letter-spacing:.3px;
+    opacity:.14; transform: translateY(16px);
+    transition: opacity .9s ease, transform .9s ease;
+  }
+  blockquote.line.active{ opacity:1; transform:translateY(0); }
+  blockquote.line span.tag{
+    display:block; margin-top:6px; font-family:'Poppins',sans-serif; font-style:normal;
+    font-size:.65rem; letter-spacing:2px; text-transform:uppercase; color:var(--ink-faint);
+  }
+
+  .characters{
+    display:flex; align-items:center; justify-content:center; gap:26px;
+    margin: 8px 0 46px;
+  }
+  .character-card{
+    text-align:center; padding:22px 26px; border-radius:2px;
+    min-width:140px; background: linear-gradient(180deg, rgba(255,255,255,.02), transparent);
+  }
+  .character-role{
+    display:block; font-family:'Cormorant Garamond', serif; font-style:italic; font-size:1.4rem; color:#fff;
+  }
+  .character-as{
+    display:block; margin-top:8px; font-size:.62rem; letter-spacing:2.5px;
+    text-transform:uppercase; color: var(--accent);
+  }
+  .character-connector{
+    font-family:'Cormorant Garamond', serif; font-size:1.4rem; color: var(--ink-faint);
+  }
+
+  ul.milestones{
+    list-style:none; margin: 10px 0 20px; padding-left: 4px;
+    border-left: 1px solid var(--line);
+  }
+  ul.milestones li{
+    position:relative; padding: 0 0 34px 30px;
+    opacity:.15; transform: translateY(10px);
+    transition: opacity .8s ease, transform .8s ease;
+  }
+  ul.milestones li.active{ opacity:1; transform:translateY(0); }
+  ul.milestones li::before{
+    content:""; position:absolute; left:-4.5px; top:6px; width:8px; height:8px;
+    border-radius:50%; background: var(--bg); border:1px solid var(--accent);
+  }
+  ul.milestones li.active::before{ background: var(--accent); }
+  ul.milestones li .beat{
+    font-family:'Cormorant Garamond', serif; font-size:1.15rem; color:var(--ink);
+  }
+  ul.milestones li .date{
+    display:inline-block; font-size:.62rem; letter-spacing:2.5px; text-transform:uppercase;
+    color: var(--accent); font-family:'Poppins',sans-serif;
+  }
+
+  .ending{
+    text-align:center; padding: 140px 26px 120px; position:relative; z-index:2;
+  }
+  .ending-mark{
+    font-family:'Cormorant Garamond', serif; font-style:italic; font-weight:400;
+    font-size:clamp(3.5rem, 12vw, 6rem); color:#fff; line-height:1;
+    opacity:.15; transform: translateY(16px);
+    transition: opacity 1s ease, transform 1s ease;
+  }
+  .ending-mark.active{ opacity:1; transform:translateY(0); }
+  .ending p{
+    max-width:420px; margin: 26px auto 0; font-family:'Cormorant Garamond', serif;
+    font-size:1.1rem; color: var(--ink-dim); line-height:2;
+    opacity:.15; transform: translateY(16px);
+    transition: opacity 1s ease .1s, transform 1s ease .1s;
+  }
+  .ending p.active{ opacity:1; transform:translateY(0); }
+  .ending .ending-line{
+    margin-top:34px; font-family:'Cormorant Garamond', serif; font-style:italic;
+    font-size:.95rem; letter-spacing:.5px; color: var(--ink-dim);
+  }
+
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(15px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes float{ 0%,100%{transform:translate(-50%,0);} 50%{transform:translate(-50%,8px);} }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+    p.reveal, blockquote.line, ul.milestones li, .ending-mark, .ending p{ opacity:1; transform:none; filter:none; }
+  }
+</style>
+</head>
+<body class="locked">
+
+<div class="preloader" id="preloader">
+  <div class="preloader-count" id="preCount">0</div>
+  <div class="preloader-unit">days</div>
+  <div class="preloader-bar"><span id="preBar"></span></div>
+</div>
+
+<div class="noise"></div>
+<div class="stars"></div>
+<div class="top-progress" id="topProgress"></div>
+<div class="thread"><div class="thread-fill" id="threadFill"></div></div>
+<div class="day-badge">Day <b id="dayCount">000</b> / 1000</div>
+
+<section class="hero">
+  <div class="hero-content">
+    <span class="hero-subtitle"></span>
+    <div class="hero-divider"></div>
+    <div class="hero-stats">
+      <div class="hero-stat"><span>Day 1</span><small>1 December 2023</small></div>
+      <div class="hero-stat-line"></div>
+      <div class="hero-stat"><span>Day 1000</span><small>&amp; counting</small></div>
+    </div>
+  </div>
+</section>
+
+<main class="story">
+
+  <section class="chapter">
+    <div class="chapter-eyebrow">Prologue</div>
+    <h2 class="chapter-title">Our Story — From Strangers to Us</h2>
+    <div class="characters">
+      <div class="character-card"><span class="character-role">Sneha</span><span class="character-as">as Shoko</span></div>
+      <div class="character-connector">&times;</div>
+      <div class="character-card"><span class="character-role">Harsh</span><span class="character-as">as Geto</span></div>
+    </div>
+    <p class="reveal">Both of them are anime lovers.</p>
+    <p class="reveal">They enjoy watching anime, and eventually, an anime group chat becomes the place where their story begins.</p>
+  </section>
+
+  <section class="chapter">
+    <div class="chapter-marker">
+      <span class="chapter-numeral">I</span>
+      <span class="chapter-name">The Longest Distance</span>
+    </div>
+
+    <h3 class="scene-title">The Beginning</h3>
+    <p class="reveal">After finishing school, Sneha started feeling very lonely.</p>
+    <p class="reveal">She had graduated from 12th with Science and was now studying Microbiology in college, but things at home were not easy.</p>
+    <p class="reveal">Her parents were not satisfied with what she had achieved. They believed she should have accomplished much more by that age.</p>
+    <p class="reveal">Sneha tried to deal with all of that emotionally while also feeling alone. She had one close school friend, Dolly, but they didn't talk as much anymore. So Sneha decided to make some online friends.</p>
+    <p class="reveal">One of her online friends was Sayam, who represents Gojo in this story. At some point, Sayam proposed to Sneha, and she accepted him partly because she wanted to understand what being in a relationship felt like.</p>
+    <p class="reveal">But Sayam was very secretive about himself. He didn't want to tell Sneha much about his family or his real background. She barely knew anything about him.</p>
+    <p class="reveal">Then Sneha had an idea. She decided to create a Jujutsu Kaisen group chat, where everyone would act like their favorite characters. She named it Jujutsu Kaisen Afterlife, because almost everyone from the anime and manga was dead.</p>
+    <p class="reveal">And that's where Harsh entered the story. On 30 November 2023, Sneha messaged an Instagram account named Geto_nk, belonging to Harsh.</p>
+
+    <blockquote class="line">"Hey, we have a group of Shoko and Gojo, and we want Geto. Can you be Geto, if you're comfortable? 😭"</blockquote>
+
+    <p class="reveal">Harsh saw the message on 1 December 2023. And that simple message would completely change both of their lives.</p>
+
+    <h3 class="scene-title">Harsh's Side</h3>
+    <p class="reveal">Harsh had his own problems. He was the youngest child in his family and, from the outside, looked like the good kid of the family. But he was dealing with his own family problems and, more importantly, the consequences of some very bad decisions.</p>
+    <p class="reveal">In 2023, he didn't study properly for his 10th board exams. He failed. And strangely enough, he didn't regret his decision.</p>
+    <p class="reveal">Instead, he started working at a bag factory for three months. Then, in September, he got a job at a jewellery showroom. It was almost the perfect job for him — everything seemed to be going exactly the way he wanted.</p>
+    <p class="reveal">But Harsh had one problem: his pride. He couldn't easily accept things that hurt his self-respect.</p>
+    <p class="reveal">Then, at the beginning of December, while he was going to work, he noticed a message. It said:</p>
+
+    <blockquote class="line">"Hey, we have a group of Shoko and Gojo, and we want Geto. Can you be, if you're comfortable? 😭"</blockquote>
+    <blockquote class="line">"What the hell is happening? Is this even real?"<span class="tag">His first thought</span></blockquote>
+    <blockquote class="line">Yes 🤧<span class="tag">His legendary response</span></blockquote>
+
+    <p class="reveal">And just like that, Geto entered the group chat.</p>
+
+    <h3 class="scene-title">The First Meeting</h3>
+    <p class="reveal">The group was called Jujutsu Kaisen. Harsh was introverted and had never really been part of a group chat like this before. So when he joined, he simply said:</p>
+    <blockquote class="line">"Hello."</blockquote>
+    <p class="reveal">Soon, everyone started playing Truth or Dare. Sneha chose Dare. And the first thing that came into her mind was:</p>
+    <blockquote class="line">"Send your picture."</blockquote>
+    <p class="reveal">Hehehe. Sayam's reaction was basically 🙄. Sneha completed the dare and sent an old picture of herself. She even said:</p>
+    <blockquote class="line">"Main toh buri dikhti hoon."</blockquote>
+    <p class="reveal">But Harsh had a completely different thought:</p>
+    <blockquote class="line">"Hahahaha... now this girl is going to be my wife. She's so beautiful."</blockquote>
+    <p class="reveal">Then he found out that Sneha and Sayam were already dating. Harsh's reaction internally was:</p>
+    <blockquote class="line">"Haan bhai, apni zindagi mein sukh hi kahan hai."</blockquote>
+    <p class="reveal">Still, he congratulated them. The game continued, and everyone started introducing themselves. Harsh said he was from Delhi and was 15, although he told them he was 17. Sneha was actually from Amreli, Gujarat, but told them she was from Ahmedabad — she also said she was 17.</p>
+    <p class="reveal">Sayam didn't want to reveal anything about himself. He only told them his name was Sayam. Harsh started calling him Satoru, while Shoko often called him an idiot.</p>
+
+    <h3 class="scene-title">The First Connection</h3>
+    <p class="reveal">Because Sayam refused to tell Sneha anything about his background, Harsh and Sneha started talking privately. They wanted to understand what was really going on with him.</p>
+    <p class="reveal">Eventually, Sayam became upset and blocked Harsh. For a day or two, Sneha and Harsh also stopped talking casually.</p>
+    <p class="reveal">Then they noticed something strange — Sayam wasn't coming online. Sneha changed her Instagram name to "Instagram User," hoping that when he eventually returned, he would be shocked and think she had blocked him.</p>
+    <p class="reveal">Harsh didn't know the real reason. He thought:</p>
+    <blockquote class="line">"Sneha blocked him because her boyfriend told her to."</blockquote>
+    <p class="reveal">So he messaged her. He didn't understand why she had blocked Sayam, but he told her it was okie. Deep down, Harsh was genuinely sad — he knew that online friendships could disappear at any moment, and people you meet randomly on the internet can simply vanish from your life.</p>
+    <p class="reveal">Then Sneha came online. She explained that she was actually planning a prank on Sayam. For Harsh, it was like a double-edged sword: he was happy because Sneha hadn't actually blocked him, but there was still something complicated about the whole situation.</p>
+
+    <h3 class="scene-title">Becoming Real Friends</h3>
+    <p class="reveal">After all of this, Sneha and Harsh slowly became genuine friends. They continued playing Truth or Dare and started learning more about each other — eventually, they knew around 60% of each other's lives. But strangely, it was mostly just the two of them who knew these things.</p>
+    <p class="reveal">One day, Sneha hesitated before asking:</p>
+    <blockquote class="line">"We don't really get enough time to talk. Can we talk at 6 AM every morning?"</blockquote>
+    <p class="reveal">Harsh simply replied:</p>
+    <blockquote class="line">"Okie."</blockquote>
+    <p class="reveal">She hadn't expected him to understand what she actually meant — she just wanted to talk to him. And he understood without asking questions. That made Sneha incredibly happy.</p>
+    <p class="reveal">The next morning, Harsh woke up at exactly 6:00 AM. Sneha arrived around 6:20 AM, genuinely surprised.</p>
+    <blockquote class="line">"Itni jaldi kyun uth gaya? Thoda late uthta."</blockquote>
+    <blockquote class="line">"Tune bola tha baat karni hai, toh main uth gaya." 😂</blockquote>
+    <p class="reveal">What she didn't know was that Harsh hadn't even properly slept that night because he wanted to talk to her, even though he had to leave for work at 10 AM. They talked until around 9 AM — and this became their routine, every morning at 6, for almost a week.</p>
+    <p class="reveal">Then, on the third day, Sneha couldn't fight her sleep anymore. She fell into a deep sleep and didn't come online. Harsh woke up at 6 and waited — he kept waiting until around 9 AM. But Sneha was peacefully sleeping. 😂</p>
+    <p class="reveal">Later that evening, she came online, happily regretting that she had missed their morning conversation. And Harsh told her that he had waited for her. That was another small moment that brought them closer — they were slowly becoming best friends.</p>
+
+    <h3 class="scene-title">Sayam Returns</h3>
+    <p class="reveal">After around 15–20 days, Sayam finally came back online. Sneha asked him why he had disappeared. His excuse was:</p>
+    <blockquote class="line">"Exams aa rahe the. Phone use nahi kar pa raha tha, isliye online nahi aa paya."</blockquote>
+    <p class="reveal">Sneha understood and simply told him:</p>
+    <blockquote class="line">"Next time bata ke jaana."</blockquote>
+    <p class="reveal">Later, she told Harsh what had happened. His reaction was basically:</p>
+    <blockquote class="line">"WTF? Ye kya excuse hai? Aur tumne usse kuch bola bhi nahi?"</blockquote>
+    <p class="reveal">But Sneha didn't say much. She only told him:</p>
+    <blockquote class="line">"Sayam is back."</blockquote>
+    <p class="reveal">But something else bothered Harsh — it wasn't that Sayam had returned, it was the fact that Sneha kept referring to him as "him." Harsh thought:</p>
+    <blockquote class="line">"Naam bhi toh bol sakti hai. Him bolna zaroori hai kya?"</blockquote>
+    <p class="reveal">The next day, Sayam disappeared again — this time, for even longer. Sneha started getting worried. She didn't know how to find him, so she tried another Instagram account, contacting some of his followers and friends, but nobody knew where he was.</p>
+    <p class="reveal">Meanwhile, Sneha and Harsh continued talking every day — their conversations had become part of their daily lives. Sneha would tell Harsh:</p>
+    <blockquote class="line">"He's still not online... I hope kuch hua toh nahi."</blockquote>
+    <p class="reveal">Sometimes she was genuinely crying because she didn't understand why he wasn't coming back. She didn't want Harsh to know how deeply she was affected. But Harsh already knew.</p>
+
+    <h3 class="scene-title">The Ignore Game</h3>
+    <p class="reveal">After some time, Sneha and Harsh had an argument. This time, it became a serious fight. Sneha suggested:</p>
+    <blockquote class="line">"Let's play an ignore game. Jo pehle message karega, woh haar jayega."</blockquote>
+    <blockquote class="line">"Main toh ignore karke teri existence bhi bhool jaunga."<span class="tag">Harsh</span></blockquote>
+    <blockquote class="line">"Existence kya, main toh sab bhool jaungi."<span class="tag">Sneha</span></blockquote>
+    <p class="reveal">Then she sent him:</p>
+    <blockquote class="line">
+      "Until you message first, and don't take it as I'm leaving forever. I told you, I'll prove it by staying. I'm doing this because you made me do this. And if you ever have a mental emergency and need help, then message me 😉👍 — I don't leave my friends easily. And if YOU don't want to be with me, then it's okay 👍. The ignore game starts now."
+    </blockquote>
+    <p class="reveal">Harsh accepted. And just like that, the ignore game began.</p>
+
+    <h3 class="scene-title">The Jealousy Arc</h3>
+    <p class="reveal">During this period, Sneha was often alone at home. She had some friends in college, but none of them were as close to her as Harsh had become. And somewhere between friendship, distance, arguments and countless conversations, something started changing.</p>
+    <ul class="milestones">
+      <li><span class="beat">Who is Viki?</span></li>
+      <li><span class="beat">Why are you Geto?</span></li>
+      <li><span class="date">23 March 2024</span></li>
+      <li><span class="beat">Why you?</span></li>
+      <li><span class="beat">Acceptance.</span></li>
+    </ul>
+  </section>
+
+  <section class="chapter">
+    <div class="chapter-marker">
+      <span class="chapter-numeral">II</span>
+      <span class="chapter-name">Above the Clouds</span>
+    </div>
+    <ul class="milestones">
+      <li><span class="beat">Falling in love.</span></li>
+      <li><span class="beat">Marriage.</span></li>
+      <li><span class="beat">Their first full-day conversations.</span></li>
+      <li><span class="date">21 July 2024</span></li>
+      <li><span class="beat">The first parcel from you.</span></li>
+      <li><span class="beat">Their first Diwali together.</span></li>
+      <li><span class="beat">The first parcel from me.</span></li>
+    </ul>
+  </section>
+
+  <section class="chapter">
+    <div class="chapter-marker">
+      <span class="chapter-numeral">III</span>
+      <span class="chapter-name">The Highest Ground</span>
+    </div>
+    <ul class="milestones">
+      <li><span class="beat">Preparing your gifts.</span></li>
+      <li><span class="beat">The second gift from me.</span></li>
+      <li><span class="date">23 March 2025</span></li>
+      <li><span class="beat">Their relationship reaches its happiest point.</span></li>
+      <li><span class="beat">Exams.</span></li>
+      <li><span class="date">8 May 2025</span></li>
+      <li><span class="beat">Their first marriage anniversary.</span></li>
+      <li><span class="beat">Results.</span></li>
+    </ul>
+  </section>
+
+  <section class="chapter">
+    <div class="chapter-marker">
+      <span class="chapter-numeral">IV</span>
+      <span class="chapter-name">Dust on the Shelf</span>
+    </div>
+    <ul class="milestones">
+      <li><span class="date">21 July 2025</span></li>
+      <li><span class="beat">The second parcel.</span></li>
+      <li><span class="beat">Their relationship reaches its lowest point.</span></li>
+      <li><span class="beat">Forgiveness.</span></li>
+      <li><span class="beat">The end of the dream.</span></li>
+    </ul>
+  </section>
+
+  <section class="chapter">
+    <div class="chapter-marker">
+      <span class="chapter-numeral">V</span>
+      <span class="chapter-name">Through the Dust</span>
+    </div>
+    <p class="reveal">Slowly, life started becoming normal again. They returned to their routine.</p>
+    <ul class="milestones">
+      <li><span class="beat">Daily calls.</span></li>
+      <li><span class="beat">Weekend night conversations.</span></li>
+      <li><span class="date">27 February 2026</span></li>
+      <li><span class="beat">The second gift from me.</span></li>
+      <li><span class="date">23 March 2026</span></li>
+      <li><span class="beat">The Curse of 856 Days.</span></li>
+    </ul>
+    <p class="reveal">They had already survived so much. But the story wasn't finished yet.</p>
+  </section>
+
+  <section class="chapter">
+    <div class="chapter-marker">
+      <span class="chapter-numeral">VI</span>
+      <span class="chapter-name">Destiny</span>
+    </div>
+    <h3 class="scene-title">A New Path</h3>
+    <p class="reveal">Maybe some people meet by chance. Maybe some friendships begin with nothing more than a random message. Maybe two people who were never supposed to meet somehow find each other anyway.</p>
+    <p class="reveal">Their story began with:</p>
+    <blockquote class="line">"Hey, we have a group of Shoko and Gojo, and we want Geto..."</blockquote>
+    <p class="reveal">Neither of them knew what that message would become. But sometimes, the smallest messages begin the longest stories.</p>
+  </section>
+
+</main>
+
+<footer class="ending">
+  <div class="ending-mark reveal">1000</div>
+  <p class="reveal">It started with one message on Instagram.<br>A thousand days later, we're still here.</p>
+  <div class="ending-line">— Shoko &amp; Geto</div>
+</footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const preloader = document.getElementById("preloader");
+  const preCount = document.getElementById("preCount");
+  const preBar = document.getElementById("preBar");
+  const duration = 1500;
+  const start = performance.now();
+
+  function tick(now){
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    preCount.textContent = Math.round(eased * 1000);
+    preBar.style.width = (eased * 100) + "%";
+    if (t < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      setTimeout(() => {
+        preloader.classList.add("hidden");
+        document.body.classList.remove("locked");
+      }, 250);
+    }
+  }
+  requestAnimationFrame(tick);
+
+  const revealables = document.querySelectorAll(".reveal, blockquote.line, ul.milestones li");
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("active");
+        io.unobserve(entry.target);
+      }
+    });
+  }, { root: null, rootMargin: "-15% 0px -15% 0px", threshold: 0 });
+  revealables.forEach(el => io.observe(el));
+
+  const threadFill = document.getElementById("threadFill");
+  const topProgress = document.getElementById("topProgress");
+  const dayCount = document.getElementById("dayCount");
+  let ticking = false;
+
+  function updateProgress(){
+    const doc = document.documentElement;
+    const scrollTop = window.scrollY || doc.scrollTop;
+    const max = doc.scrollHeight - window.innerHeight;
+    const pct = max > 0 ? Math.min(1, Math.max(0, scrollTop / max)) : 0;
+
+    threadFill.style.height = (pct * 100) + "%";
+    topProgress.style.width = (pct * 100) + "%";
+    dayCount.textContent = String(Math.round(pct * 1000)).padStart(3, "0");
+    ticking = false;
+  }
+
+  window.addEventListener("scroll", () => {
+    if (!ticking) {
+      requestAnimationFrame(updateProgress);
+      ticking = true;
+    }
+  }, { passive: true });
+
+  updateProgress();
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    });
+  }
+});
+</script>
+
+</body>
+</html>
